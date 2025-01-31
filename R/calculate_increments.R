@@ -1,4 +1,20 @@
-##### fonction de calcul des accroissements #####
+#' Fonction de calcul des accroissements
+#' @description La fonction utilise une liste de noms de tables de résultats (nomenclature spécifique : "gfForetRege_Essence"). 
+#' Elle décompose chaque nom de table pour retrouver les variables qui le composent. Ces éléments sont ensuite répartis dans une table
+#' qui liste les combinaisons de variables possibles. Cette table de combinaisons est utilisée lors de l'étape d'agrégation des résultats.
+#' Les tables de résultats obtenus en sortie de l'agrégation correspondent à la liste de noms de tables en entrée.
+#' @return La fonction renvoie la table d'entrée en ayant rajouté les variables de résultats correspondant au calcul d'accroissement (en diamètre, en volume, ...) 
+#' @param df = table d'inventaire en entrée
+#' @param echant_change = cet argument indique s'il y a eu un changement de protocole entre 2 inventaires
+#' @param cycles_table = tables listant les cycles d'inventaire
+#' @param plot_table = tables listant les placettes d'inventaire
+#' @param vars = variables de résultats
+#' @import dplyr
+#' @import stringr
+#' @import rlang
+#' @import tidyr
+#' @importFrom stats quantile
+#' @export
 calculate_increments <- function(
     df = NULL,
     echant_change = F,
@@ -6,6 +22,16 @@ calculate_increments <- function(
     plot_table = NULL,
     vars = c("Diam", "Gha", "Vha", "VcHa")
 ) {
+  # initialize variables
+  Angle <- Annee <- Azimut <- Caract1 <- Caract2 <- Caract3 <- Cat <- Classe <- ClasseSup <- Code <- NULL
+  CodeEcolo <- CoefHoupp <- Coupe <- Cycle <- Diam <- Diam1 <- Diam2 <- DiamSup <- Dist <- EssReg <- NULL
+  Essence <- Gha <- Haut <- IdArbre <- InfraDensite <- Infradensite <- Limite <- Lineaire <- NULL
+  Nha <- NumArbre <- NumForet <- NumPlac <- NumTarif <- NumTarifBMP <- Observations <- PU <- NULL
+  PUSup <- Qual <- Ref_CodeEcolo <- Reg1 <- Reg2 <- SRF <- Stade <- StadeD <- StadeE <- Stade_AFI <- NULL
+  Strate <- TauxCarbone <- TauxV <- Taux_carbone <- Transect <- Type <- TypeEss <- TypeTarif <- NULL
+  TypeTarifBMP <- VcHa <- Vha <- VhaIFN <- VhaSup <- calculs_Eco <- calculs_Nha <- test <- time_span <- NULL
+  calculs_Vol <- echant_DF <- echant_ID <- main_species <- prep_df <- species_to_join <- NULL
+  
   table <-
     df %>%
     # Arbres %>%

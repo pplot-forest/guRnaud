@@ -1,7 +1,19 @@
-##### fonction de calculs des dmh (duplique les lignes de la table Arbres pour chaque dmh reconnu) #####
+#' Fonction de traitement des données de dendromicrohabitats (DMH)
+#' @description La fonction récupère les DMH inventoriés sur chaque arbre, décompose et liste l'ensemble des DMH rencontrés dans une table "Codes".
+#' @return La fonction retourne la table "Codes" contenant las liste des DMH rencontrés pour des calculs de fréquence/densité.
+#' @param df = table d'inventaire en entrée
+#' @param dmh_df = table de codification des DMH
+#' @import dplyr
+#' @import rlang
+#' @importFrom stats quantile
+#' @import stringr
+#' @import tidyr
+#' @export
 calculs_dmh <- function(
     df = NULL, dmh_df = NULL
 ) {
+  # initialize variables
+  Code <- CodeEcolo <- Codification <- Ref_CodeEcolo <- dmh_split <- NULL
 
   if (nrow(df) > 0) {
     df <- df %>% mutate(Ref_CodeEcolo = tolower(Ref_CodeEcolo))

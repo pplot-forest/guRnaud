@@ -1,5 +1,18 @@
-##### fonction de contôle des arbres dupliqués (arbres repérés az+dist uniquement) #####
+#' Contôle des arbres dupliqués (arbres repérés az+dist uniquement)
+#' @description La fonction permet de contrôler les doublons dans la liste des arbres inventoriés.
+#' @return La fonction retourne la table d'entrée sans modifications. Si des doublons ont été détectés alors un message d'erreur avec un classeur listant les erreurs apparaît.
+#' @param table = table d'inventaire en entrée
+#' @import dplyr
+#' @import openxlsx
+#' @import rlang
+#' @importFrom stats quantile
+#' @import tidyr
+#' @import tools
+#' @export
 check_duplicated_trees <- function(table = NULL) {
+  # initialize variables
+  Azimut <- Cycle <- Dist <- NumForet <- NumPlac <- NULL
+  
   # -- arrange table
   table <- table %>% arrange(NumForet, NumPlac, Cycle, Azimut, Dist)
 

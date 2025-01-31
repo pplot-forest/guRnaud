@@ -1,8 +1,21 @@
-
-##### fonction de traitement du bois mort au sol < 30 cm #####
+#' Fonction de traitement du bois mort au sol < 30 cm
+#' @description La fonction permet de traiter les données d'inventaire de bois mort au sol inférieur à 30 cm de diamètre
+#' @return La fonction retourne la table d'entrée avec les variables de résultats.
+#' @param df = table d'inventaire en entrée
+#' @param code_essreg = table listant les regroupements d'essence
+#' @import dplyr
+#' @import stringr
+#' @import rlang
+#' @import tidyr
+#' @importFrom stats quantile
+#' @export
 calculs_bm_lineaire <- function(
     df = NULL, code_essreg = NULL
 ) {
+  # initialize variables
+  Angle <- Cat <- Classe <- Cycle <- Diam <- EssReg <- Essence <- Lineaire <- NumForet <- NumPlac <- NULL
+  Stade <- StadeD <- StadeE <- Transect <- Vha <- NULL
+  
   df <- if (nrow(df) > 0) {
     df %>%
       # rename("Lineaire" = "BMSLin\u00E9aire") %>%

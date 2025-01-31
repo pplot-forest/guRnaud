@@ -1,9 +1,22 @@
-
+#' Vérification des données SIG (sf)
+#' @description La fonction contrôle les shapes de placettes d'inventaire et vérifie que les numéros placette et numéros de dispositif sont bien présents.
+#' @return La fonction retourne la table d'entrée sans modifications. Si des erreurs ou des éléments manquants sont détectés, des messages apparaissent.
+#' @param sf = simple feature en entrée
+#' @import dplyr
+#' @import openxlsx
+#' @import rlang
+#' @importFrom stats quantile
+#' @import tidyr
+#' @import sf
+#' @export
+check_sf <- function(sf) {
+  # initialize variables
+  NumForet <- NumPlac <- sf_path <- NULL
+  
 ##### fonction de vérification du sf #####
 # contrôle : 1/ présence des colonnes NumForet et NumPlac
 #            2/ valeurs vides dans les colonnes NumForet et NumPlac
 #            3/ coordonnées vides ?
-check_sf <- function(sf) {
   # intitulé recherchés par défaut
   NumForet_label <- "NumForet"
   NumPlac_label <- "NumPlac"

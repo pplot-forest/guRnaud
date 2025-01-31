@@ -1,9 +1,25 @@
-##### fonction pour calculer les résultats sur le cercle #####
+#' Fonction de calcul des résultats sur le cercle
+#' @description La fonction permet de calculer les variables de résultats pour la/les population(s) inventoriées sur un cercle de rayon défini.
+#' @return La fonction retourne la table d'entrée avec les variables de résultats.
+#' @param df = table d'inventaire en entrée
+#' @param population = définition de la population concernée
+#' @param add_bmp_vars = variable indiquant si des variables de résultat propres au bois mort sont à rajouter
+#' @param code_essreg = table contenant la liste des regroupement d'essences
+#' @param diam_cat = table listant les différentes catégories de diamètre
+#' @import dplyr
+#' @import rlang
+#' @importFrom stats quantile
+#' @import stringr
+#' @import tidyr
+#' @export
 calculs_cercles <- function(
     df = NULL, population = NULL, dist_max = NULL,
     add_bmp_vars = F, code_essreg = NULL,
     diam_cat = NULL
 ) {
+  # initialize variables
+  Cat <- Diam <- Nbre <- Nha <- Population <- var <- NULL
+  
   # id vars
   id_vars <- c("NumForet", "NumPlac", "Cycle")
 

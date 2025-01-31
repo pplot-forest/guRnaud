@@ -1,5 +1,11 @@
-##### fonction de conversion des Coords au format shape #####
+#' Conversion des coordonnées de placettes au format shape
+#' @description La fonction permet de passer de coordonnées de placette enregistrées dans une table à un shape.
+#' @param Coords = tables des coordonnées de placette
+#' @import stringr
+#' @export
 Coords2SHP <- function(Coords = NULL) {
+  # initialize variables
+  EPSG <- NumForet <- Xgps <- Ygps <- NULL
 
   if (dim(Coords)[1] > 0) {
 

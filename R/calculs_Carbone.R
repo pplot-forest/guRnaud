@@ -1,4 +1,18 @@
-##### fonction calculs des quantités de carbone pour les arbres vivants #####
+#' Fonction de calcul des quantités de carbone pour les arbres vivants
+#' @description La fonction permet de calculer les variables de résultats relatives au stock de carbone dans le bois vivant sur pied.
+#' @return La fonction retourne la table d'entrée avec les variables de résultats.
+#' @param df = table d'inventaire en entrée
+#' @param height_by_class_and_NumTarif = à préciser
+#' @param DecroissanceRx = à préciser
+#' @param yield_table = table de rendements - à préciser
+#' @param DureeVieD = à préciser
+#' @param DureeVieConnexes = à préciser
+#' @import dplyr
+#' @import rlang
+#' @importFrom stats quantile
+#' @import stringr
+#' @import tidyr
+#' @export
 calculs_Carbone <- function(
     df = NULL,
     height_by_class_and_NumTarif = NULL,
@@ -7,6 +21,12 @@ calculs_Carbone <- function(
     DureeVieD = NULL,
     DureeVieConnexes = NULL
 ) {
+  # initialize variables
+  CoefHoupp <- Cycle <- Diam <- Hauteur <- IdArbre <- InfraDensite <- Nha <- NumTarif <- Poids <- Reg1 <- NULL
+  TauxCarbone <- TypeEss <- TypeTarif <- V1 <- V2 <- V3 <- VSch <- billon <- duree_vie <- produit <- NULL
+  tCha <- volume <- yield_billon <- yield_connexe <- NULL
+  
+  
   # # -- table des rendements
   # yield_table <- tibble(
   #   qual = c("A", "B", "C", "D"),

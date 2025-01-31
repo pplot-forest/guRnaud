@@ -1,5 +1,20 @@
-##### fonction pour construire la table des combinaisons de données à obtenir #####
-build_combination_table <- function(vecteur) {
+#' Fonction de combinaison des groupes de variables à analyser
+#' @description La fonction utilise une liste de noms de tables de résultats (nomenclature spécifique : "gfForetRege_Essence"). 
+#' Elle décompose chaque nom de table pour retrouver les variables qui le composent. Ces éléments sont ensuite répartis dans une table
+#' qui liste les combinaisons de variables possibles. Cette table de combinaisons est utilisée lors de l'étape d'agrégation des résultats.
+#' Les tables de résultats obtenus en sortie de l'agrégation correspondent à la liste de noms de tables en entrée.
+#' @return La fonction renvoie une table de combinaisons de variables par population
+#' @param vecteur = liste des bnoms de tables de résultats
+#' @import dplyr
+#' @import stringr
+#' @import rlang
+#' @import tidyr
+#' @importFrom stats quantile
+#' @export
+build_combination_table <- function(vecteur = NULL) {
+  # initialize variables
+  Data <- Var1 <- Var2 <- Var5 <- Var6 <- Var7 <- var <- NULL
+  
   df <- data.frame(
     var = vecteur,
     stringsAsFactors = F

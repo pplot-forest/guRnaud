@@ -1,4 +1,11 @@
-#### fonction d'agrégation des résultats par placettes ####
+#' Fonction d'agrégation des résultats par placettes
+#' @description La fonction permet d'agréger les résultats d'inventaire par placette
+#' @return La fonction retourne une table d'agrégation des résultats
+#' @param df = table d'inventaire d'entrée
+#' @param group_var = groupe à utiliser pour agréger les données
+#' @param vars = variagbles à agréger
+#' @import dplyr
+#' @export
 aggregate_tables_by_plot <- function(
     df = NULL, group_var = NULL, vars = NULL
 ) {

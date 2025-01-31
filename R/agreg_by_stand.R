@@ -1,21 +1,20 @@
-# ----- Chargement des packages nécessaires -----
-suppressMessages({
-  library("dplyr")
-  library("stringr")
-  library("gtools")
-  library("rlang")
-  library("tidyr")
-  library("stats")
-})
-
-
-
-
-
-# ----- Fonction gf_AgregPlacettes -----
-# = Agrégation, à l'échelle de différents ensembles (forêt,
-# strate d'échantillonnage, ...), des différentes variables
-# d'analyse (dendrométriques, économique et écologiques)
+#' Fonction d'agrégation des résultats par ensemble
+#' @description La fonction permet d'agréger les résultats à différentes échelles (forêt,
+# strate d'échantillonnage, ...)
+#' @return La fonction crée une liste de tables de résultats par ensemble ("results_by_group") enregistrée dans l'archive "gfTablesElaborees.Rdata"
+#' @param wd = répertoire de travail
+#' @param output_dir = répertoire de sortie
+#' @param combination_table = table listant les combinaisons de variables à suivre pour agréger les résultats
+#' @param forest = numéro et nom de la forêt
+#' @param last_cycle = numéro du dernier passage en inventaire
+#' @param complete_progress = barre de progression (application shiny)
+#' @param i18n = fonction de traduction  (application shiny)
+#' @import dplyr
+#' @import shiny
+#' @import rlang
+#' @import tidyr
+#' @importFrom stats na.omit
+#' @export
 agreg_by_stand <- function(
   wd = NULL,
   output_dir = NULL, # à améliorer
@@ -25,6 +24,10 @@ agreg_by_stand <- function(
   complete_progress = NULL,
   i18n = NULL
 ) {
+  # initialize variables
+  Cycle <- Foret <- Forets <- Nbre <- NbreAcct <- Nom <- NumForet <- NumPlac <- Observations <- NULL
+  Poids <- PoidsAcct <- PoidsPlacette <- Regroups <- gf_AgregMoySdEr <- results_by_plot <- NULL
+  
   # -- switch shiny ***
   # incrémentation de la barre de progression
   # incProgress(detail = i18n()$t("Agrégation des résultats par dispositif..."))

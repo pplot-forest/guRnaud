@@ -1,23 +1,23 @@
 #' Edition des fiches de remesure
 #' @description La fonction permet d'éditer les fiches de remesure pour le prochain passage en inventaire (format .pdf)
-
 #' @author Valentin Demets
-#'
 #' @param wd = répertoire contenant les données
+#' @param files_list = liste des fichiers d'inventaire
 #' @param lang = langue (sélectionnée) de l'interface
-#'
+#' @param template = nom du template (.Rnw)
 #' @import tcltk
 #' @import knitr
 #' @import stringr
-#'
 #' @export
-
 gf_EditFichesRem <- function(
   wd = NULL, 
   files_list = NULL,
   lang = "FRA", 
   template = "gf_FichesRem_2021.Rnw"
 ) {
+  # initialize
+  arch2 <- output <- NULL
+  
   ##### 1/ Initialisation #####
   # -- chargement des données
   # chemins relatifs des archives

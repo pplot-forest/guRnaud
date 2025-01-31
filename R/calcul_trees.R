@@ -1,137 +1,72 @@
-# ----- chargement des packages nécessaires -----
-suppressMessages({
-  library("dplyr")
-  library("stringr")
-  library("rlang")
-  library("tidyr")
-})
-
-
-# #### fonction de calcul du carbone dans le bois mort sur pied ####
-# calculs_BMP_carbone <- function(
-#   df = NULL,
-#   species_table = NULL,
-#   dead_wood_carbon_content = NULL,
-#   dead_wood_density = NULL,
-#   decomposition_stage_code = NULL
-# ) {
-#   # certaines essences non comptées car pas de données
-#   standing_dead_wood_carbon_content <-
-#     dead_wood_carbon_content %>%
-#     filter(Type == "Bois mort sur pied") %>%
-#     dplyr::select(-Type)
-#   standing_dead_wood_density <-
-#     dead_wood_density %>%
-#     filter(Type == "Bois mort sur pied") %>%
-#     dplyr::select(-Type)
-#
-#   df <-
-#     df %>%
-#     mutate(
-#       Stade_AFI = paste(StadeE, StadeD, sep = "."),
-#       time_span = paste(".", StadeD, sep = "")
-#     ) %>%
-#     left_join(
-#       decomposition_stage_code,
-#       by = c("time_span" = "Stade_AFI")
-#     ) %>%
-#     mutate(
-#       Code = ifelse(Stade_AFI == "1.1", 1, Code),
-#       Code = ifelse(Stade_AFI == "2.1", 1, Code),
-#       Code = ifelse(Stade_AFI == "4.4", 5, Code),
-#       Code = ifelse(Stade_AFI == "4.5", 5, Code)
-#     ) %>%
-#     # taux carbone Fs/Rx
-#     left_join(
-#       species_table[,c("Essence","TypeEss")],
-#       by = "Essence") %>%
-#     # taux de carbone dans feuillus/resineux en fonction stade
-#     left_join(
-#       standing_dead_wood_carbon_content,
-#       by = c("TypeEss", "Code")
-#     ) %>%
-#     left_join(
-#       standing_dead_wood_density,
-#       by = c("Essence", "Code")
-#     ) %>%
-#     mutate(
-#       Carbone = Vha * Infradensite * (Taux_carbone) / 100
-#     ) %>%
-#     select(
-#       -Stade_AFI, -time_span, -Code, -TypeEss,
-#       -Taux_carbone, -SRF, -Infradensite
-#     )
-#
-#   # -- return of calculs_BMP_carbone function
-#   return(df)
-# }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##### fonction gf_Calculs #####
-# = Calcul des variables d'analyse (dendrométrique, écologique et économique) à
-# l'échelle de chaque élément d'inventaire
+#' Fonction de calcul des résultats d'inventaire par arbre
+#' @description La fonction utilise les données d'inventaire de chaque population (arbres, régénération, bois mort, ...) 
+#' et calcule pour chaque individu les résultats d'inventaire ramenés à l'hectare.
+#' @return La fonction renvoie un ensemble de tables de résultats enregistrés dans une archive Rdata.
+#' @param wd = répertoire de travail
+#' @param output_dir = répertoire de sortie
+#' @param TauxR = taux d'actualisation
+#' @param forest = numéro et nom de la forêt
+#' @param last_cycle = numéro du dernier passage en inventaire
+#' @param combination_table = table listant les combinaisons d'attributs à utiliser pour agréger les résultats
+#' @param complete_progress = barre de progression (application shiny)
+#' @param i18n = fonction de traduction  (application shiny)
+#' @import dplyr
+#' @import stringr
+#' @import rlang
+#' @import tidyr
+#' @importFrom stats quantile
+#' @export
 gf_Calculs <- function(
-  wd = NULL, # TODO : inutile à l'avenir. Gardé par sécurité mais à supprimer
-  output_dir = NULL,
-  TauxR = 0.03,
-  forest = NULL,
-  last_cycle = NULL,
-  # arch1 = "tables/DonneesBrutes.Rdata",
-  complete_progress = NULL, # shiny related
-  i18n = NULL
+    wd = NULL, # TODO : inutile à l'avenir. Gardé par sécurité mais à supprimer
+    output_dir = NULL,
+    TauxR = 0.03,
+    forest = NULL,
+    last_cycle = NULL,
+    # arch1 = "tables/DonneesBrutes.Rdata",
+    complete_progress = NULL, # shiny related
+    i18n = NULL
 ) {
+  # Initialize variables
+  Abroutis <- AccD <- AcctGper <- AcctGper_changed <- AcctVper <- AcctVper_changed <- NULL
+  Acct_Diam <- Algan <- Attribut <- Azimut <- BMSCercles <- Caract1 <- Caract2 <- Caract3 <- NULL
+  Cat <- Cats <- Class1 <- Class2 <- Class3 <- Classe <- Classe1Ha <- Classe2Ha <- Classe3Ha <- NULL
+  ClasseSup <- CodeEcolo <- CodeEcolos <- CodeStadeDecomposition <- CoefHoupp <- Coeff <- NULL
+  Coeff.Freq <- Coeff.Var1 <- Coeff.Var2 <- Coeff.Var3 <- Coupe <- Coupe_changed <- NULL
+  Coupe_temp <- Cycle <- Cycles <- DensiteBoisMort <- Descriptif_Attribut <- Diam <- NULL
+  Diam1 <- Diam2 <- DiamSup <- Dist <- Echantillonnages <- EssInd <- EssReg <- EssValor <- NULL
+  Essence <- Essences <- Forets <- Gain <- Gainper <- Gainper_changed <- Gha <- Haut <- IdArbre <- NULL
+  InfraDensite <- Limite <- Liste <- Listes <- NbPlac <- Nbre <- Nha <- NumArbre <- NumForet <- NULL
+  NumPlac <- NumTarif <- Observations <- PU <- PUSup <- Parcelle <- Placettes <- Population <- NULL
+  Prix <- Qual <- Quals <- Recouv <- Ref_CodeEcolo <- Reg1 <- Reg2 <- Rejet <- SsPlac <- Stade <- NULL
+  StadeD <- StadeE <- Station <- Strate <- Surf <- Tarifs <- Taux <- TauxCarbone <- NULL
+  TauxCarboneBoisMort <- TauxPU <- TauxV <- Type <- TypeEss <- TypeTarif <- VcHa <- Vha <- NULL
+  VhaIFN <- VhaSup <- Vides <- calculate_increments <- calculs_Arbres <- NULL
+  calculs_BM_carbone <- calculs_Carbone <- calculs_bm_lineaire <- calculs_bmp <- NULL
+  calculs_bms_sup30 <- calculs_cercles <- calculs_dmh <- calculs_rege <- time_span <- NULL
+  change_protocole <- check_duplicated_trees <- echant_ID <- find_ESSREG <- NULL
+  miroir_add <- quantile <- set_db_id <- set_up_calcul_tables <- share_accD <- tCha <- NULL
+
+  
+  
   ##### 1/ Initialisation #####
   # -- création du dossier de sortie
   # output_dir <- file.path(output_dir, "tables")
   # output_dir <- file.path("out", disp, i18n()$t("livret_AFI"))
   dir.create(file.path(output_dir, "tables"), showWarnings = F, recursive = T)
-
+  
   # -- chargement des données d'inventaire et administratives
   inventory_tables <- load(file.path(wd, "tables/DonneesBrutes.Rdata"))
   # -- chargement du dictionnaire de traduction
   load(file.path(wd, "tables/dictionary.Rdata"))
-
+  
   # incrémentation de la barre de progression
   detail = i18n()$t("Chargement des données d'inventaire")
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
   print(detail)
-
+  
   # # -- sélection des données propres au(x) dispositif(s) choisi(s) : Utilisation en cas d'analyse transversale - à tester
   # if (repSav == wd) {
   #   # -- choix du dispositif
@@ -139,34 +74,34 @@ gf_Calculs <- function(
   #   check_all_msg <- "Editer les r\u00E9sultats pour tous les dispositifs"
   #   forest_list <- choose_forest(tables, Forets, check_all_msg)
   # } else {
-    forest_list <- forest
+  forest_list <- forest
   # }
   # last_cycle <- get_last_cycle(tables, forest_list)
-
-    # -- filtre des tables d'inventaire en fonction des numéros de dispositif sélectionnés
-    # inventory_tables <- c(
-    #   "IdArbres", "BMortSup30","BMortLineaires", "Cycles", #"Placettes",
-    #   "Reges", "Coords", "Taillis"
-    # )
-
-
-    # tables with "NumForet" -> à filtrer
-    tables_to_filter <- c()
-    for (table in inventory_tables) {
-      if ("NumForet" %in% names(get( table ))) {
-        tables_to_filter <- c(tables_to_filter, table)
-      }
+  
+  # -- filtre des tables d'inventaire en fonction des numéros de dispositif sélectionnés
+  # inventory_tables <- c(
+  #   "IdArbres", "BMortSup30","BMortLineaires", "Cycles", #"Placettes",
+  #   "Reges", "Coords", "Taillis"
+  # )
+  
+  
+  # tables with "NumForet" -> à filtrer
+  tables_to_filter <- c()
+  for (table in inventory_tables) {
+    if ("NumForet" %in% names(get( table ))) {
+      tables_to_filter <- c(tables_to_filter, table)
     }
-    filter_by_forest(tables = tables_to_filter, forest_list = forest_list, cycle = last_cycle)
-
-
+  }
+  filter_by_forest(tables = tables_to_filter, forest_list = forest_list, cycle = last_cycle)
+  
+  
   ##### 2/ Calculs des variables de la table Arbres ----- #####
-    # id variables
-    id_vars <- c("NumForet", "NumPlac", "Cycle", "Strate")
+  # id variables
+  id_vars <- c("NumForet", "NumPlac", "Cycle", "Strate")
   # -- rajout de la colonne TauxCarbone à la table Essences
   # load("/Users/Valentin/Travail/Outils/Inventaire_PP/tables/afi_species_table.Rdata")
   # Essences <- Essences %>% left_join(afi_species_table[, c("Essence", "TauxCarbone")], by = c("Nom" = "Essence"))
-
+  
   # -- set up
   echant_DF <- Echantillonnages
   Arbres <-
@@ -176,10 +111,10 @@ gf_Calculs <- function(
     # filter(!is.na(Essence) & !is.na(Azimut) & !is.na(Dist)) %>%
     # et les éléments de bois mort ou non repérés ????
     # filtre ci-dessus important. Sinon pblme dcast accroissement
-
+    
     # jonction avec la table des essences - récupération des informations carbone (TypeEss, CoefHoupp, TauxCarbone, InfraDensite)
     left_join(Essences, by = c("NumForet", "Essence" = "Nom")) %>%
-
+    
     # -- jonction avec la table 'Placettes' -> récupération des variables Strate, CoeffPente, Miroir_Azimut, Miroir_Dist,
     # initialement, on récupérait : PoidsPlacette (inutile avant le job5), Pente (à préciser avec travail pour Evrard)
     left_join(
@@ -188,14 +123,14 @@ gf_Calculs <- function(
     ) %>%
     # sort names
     select(all_of(id_vars), everything()) %>%
-
+    
     # -- jonction avec la table Echantillonnages
     left_join(
       echant_DF[, c(
         "NumForet", "Cycle", "Strate", "Surface", "NbPlac",
         "DiamLim1", "Rayon1", "DiamLim2", "Rayon2", "DiamLim3", "Rayon3",
         "Coeff", "DiamLim",
-
+        
         # "BMP_DiamLim1", "BMP_Rayon1", # TODO : à revoir
         # "BMP_DiamLim2", "BMP_Rayon2",
         "BMP"
@@ -208,39 +143,39 @@ gf_Calculs <- function(
     ) %>%
     # correction
     mutate(Coeff = Coeff * 100) # correction nécessaire car 28 >= 14 * 0.02 * 100 est faux (tests B.Meheux)
-
-      # -- placettes miroir
+  
+  # -- placettes miroir
   if (length( with(Arbres, which( !is.na(Miroir_Azimut) | !is.na(Miroir_Dist) )) ) > 0) {
     # rajout des arbres miroirs pour les placettes miroirs (Azimut_Mirroir et Dist_Mirroir nécessaires)
     Arbres <- Arbres %>% miroir_add()
-
+    
     # renuméroter arbres à cause du rajout des arbres miroirs
-      # -- define id_columns
+    # -- define id_columns
     id_columns <-
       c("NumForet", "NumPlac", "NumArbre", "Essence", "Azimut", "Dist")
-
+    
     db_tables <-
       set_db_id(table = Arbres, id_columns = id_columns, id_var = "IdArbre")
     IdArbres <- db_tables$id_table # add table 'IdArbres'
     ValArbres <- db_tables$value_table
-
+    
     Arbres <-
       IdArbres %>%
       left_join(ValArbres, by = c("IdArbre" = "IdArbre"))
   }
-
+  
   ##### 2.1/ calculs des variables stationnaires #####
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   code_qual = Quals
   code_essreg = EssReg
   code_tarif = Tarifs
   code_prix = Prix
   diam_cat = Cats
-
+  
   Arbres <-
     calculs_Arbres(
       Arbres,
@@ -248,19 +183,19 @@ gf_Calculs <- function(
       code_tarif = Tarifs, code_prix = Prix,
       diam_cat = Cats
     ) %>%
-
+    
     # récupération des regroupements d'essences
     find_ESSREG(code_essences = Essences)
-
-
+  
+  
   ##### 2.2/ calcul des accroissements (variables dynamiques) #####
   # perches + autres tiges sans Az ni Dist mis à l'écart
   # (bloquant pour les calculs d'accroissement - perche promue apparaîtrait coupée)
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   # -- tri des populations
   # distinction des perches
   # on utilise Diam et pas Diam1 comme distinction : cela permet d'éviter les classes 5 ou 20 dans les figures des perches)
@@ -278,15 +213,15 @@ gf_Calculs <- function(
     Nha, Gha, Vha
   )
   Perches <- Perches %>% filter(is.na(Type))
-
+  
   # arbres non repérés
   Arbres_nonRep <- Arbres %>% filter((is.na(Essence) | is.na(Azimut) | is.na(Dist)) & Diam >= stem_threshold_max) # 17.5 usuellement, 12.5 pour Audenge
-
+  
   # arbres repérés
   Arbres <-
     Arbres %>% filter(!is.na(Essence) & !is.na(Azimut) & !is.na(Dist) & Diam >= stem_threshold_max) # 17.5 usuellement, 12.5 pour Audenge
-
-
+  
+  
   if (max(Arbres$Cycle) > 1) {
     # -- calculs d'accroissement
     # test = acct_tables %>% filter(NumPlac == 1) %>% select(c(1,2,3,5,7,9,10,17,18,19,20,31,32,33,46:50)) # debug
@@ -297,7 +232,7 @@ gf_Calculs <- function(
         cycles_table = Cycles,
         plot_table = Placettes
       )
-
+    
     # -- sauvegarde table des accroissements en diamètre
     AcctD <-
       acct_tables %>%
@@ -305,10 +240,10 @@ gf_Calculs <- function(
         IdArbre, NumForet, NumPlac, NumArbre, Cycle,
         Essence, Classe, Acct_Diam
       )
-
+    
     Arbres <- share_accD(acct_tables)
     # tk_messageBox(type = "ok", message = "rajouter Num dans Essence + contrôle sur les prix + vérifier calculs accroissement pour changement de protocole")
-
+    
     # -- rajout de colonnes vides dans Arbres_nonRep
     Arbres_nonRep <-
       Arbres_nonRep %>%
@@ -322,13 +257,13 @@ gf_Calculs <- function(
       mutate(
         AcctGper = NA, AcctVper = NA, Gainper = NA, AcctD = NA, time_span = NA
       )
-
+    
     # -- gestion des cas où changement de protocole
     # extrait de la table Echantillonnages des cycles concernés par
     # le changement de protocole (s'il existe)
     echant_DF <- Echantillonnages
     echant_DF <- change_protocole(echant_DF) # TODO : à revoir
-
+    
     if (length(unique(echant_DF$echant_ID)) > 1) {
       # Recalculs des valeurs à l'hectare selon les paramètres stables dans le temps.
       Arbres_Acct <-
@@ -338,10 +273,10 @@ gf_Calculs <- function(
         filter(
           !is.na(Essence) & !is.na(Azimut) & !is.na(Dist)
         ) %>% # on ne prend que les arbres repérés
-
+        
         # jonction avec la table des essences - récupération des informations carbone (TypeEss, CoefHoupp, TauxCarbone, InfraDensite)
         left_join(Essences, by = c("NumForet", "Essence" = "Nom")) %>%
-
+        
         left_join(
           Placettes[, c(
             "NumForet", "NumPlac", "Cycle", "Strate", "PoidsPlacette",
@@ -368,7 +303,7 @@ gf_Calculs <- function(
           by = c("NumForet", "Cycle", "Strate", "echant_ID" = "echant_ID")
         ) %>%
         mutate(Coeff = Coeff * 100)
-
+      
       # Calculs d'accroissement avec le nouveau protocole
       Arbres_Acct <- calculs_Arbres(
         Arbres_Acct,
@@ -377,11 +312,11 @@ gf_Calculs <- function(
         code_tarif = Tarifs, code_prix = Prix,
         diam_cat = Cats
       ) %>%
-
+        
         # -- tri : ne tenir compte que des arbres repérés Azimut/Distance
         # arbres repérés
         filter(!is.na(Essence) & !is.na(Azimut) & !is.na(Dist) & Diam >= stem_threshold_max) # 17.5 usuellement, 12.5 pour Audenge
-
+      
       # repérage des cycles concernés par le changement de protocole
       cycle_INI <- min(echant_DF$Cycle)
       cycle_FIN <- max(echant_DF$Cycle)
@@ -389,14 +324,14 @@ gf_Calculs <- function(
       Arbres_Acct <-
         # calculs_Acct(
         Arbres_Acct %>%  #,
-      #   cycles_table = Cycles,
-      #   echant_change = T
-      # ) %>%
+        #   cycles_table = Cycles,
+        #   echant_change = T
+        # ) %>%
         calculate_increments(
           cycles_table = Cycles,
           plot_table = Placettes
         )
-
+      
       # fusion de l'ancienne tables arbres avec la table Arbres_Acct
       Arbres <-
         full_join(
@@ -417,15 +352,15 @@ gf_Calculs <- function(
           Coupe, Limite,
           CodeEcolo, Ref_CodeEcolo,
           Type, Haut, Stade, Caract1, Caract2, Caract3, Observations,
-
+          
           NumTarif, TypeTarif, TypeEss, CoefHoupp, TauxCarbone, InfraDensite,
-
+          
           AcctGper, AcctGper_changed,
           AcctVper, AcctVper_changed,
           Gainper, Gainper_changed,
           AcctD, #AcctD_changed, # on garde quoi qu'il arrive AcctD initial car contient plus d'infos
           Coupe, Coupe_changed,
-
+          
           time_span, echant_ID
         ) %>%
         # si le cycle est concerné par le changement de protocole alors on prend
@@ -473,7 +408,7 @@ gf_Calculs <- function(
       #        # je dois donc récupérer la notation "E" ou "C" de la colonne Coupe et,
       #        # si nécessaire, l'associer à la notation "PF" éventuellement contenue
       #        # dans Arbres_Acct
-
+      
       Arbres <- Arbres
       # rajout de colonnes vides dans Arbres_nonRep
       Arbres_nonRep <-
@@ -483,7 +418,7 @@ gf_Calculs <- function(
       Perches <-
         Perches %>%
         mutate(echant_ID = NA)
-
+      
     }
   } else {
     Arbres <-
@@ -499,7 +434,7 @@ gf_Calculs <- function(
         AcctVper = NA,
         Gainper = NA
       )
-
+    
     # rajout de colonnes vides dans Arbres_nonRep
     Arbres_nonRep <-
       Arbres_nonRep %>%
@@ -535,13 +470,13 @@ gf_Calculs <- function(
   #   }
   # }
   ##### / \ #####
-
+  
   ##### 2.3/ Fin calculs onglet arbres #####
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   Arbres <-
     Arbres %>%
     rbind(Arbres_nonRep) %>%
@@ -555,48 +490,48 @@ gf_Calculs <- function(
       AcctG = pi / 20000 * AcctD * Diam * Nha
     ) %>%
     arrange(NumForet, NumPlac, NumArbre, Cycle) #%>%
-    # Rajout de la moitié des accroissements pour les arbres coupés
-    # group_by(NumForet, NumPlac, NumArbre) %>%
-    # mutate(
-    #   AcctD = ifelse(
-    #     !is.na(lag(Coupe)) &
-    #       (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
-    #     AcctD/2, AcctD
-    #     ),
-    #   AcctG =  ifelse(
-    #     is.na(AcctG) &
-    #       (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
-    #     lag(AcctG)/2, AcctG
-    #   ),
-    #   AcctGper =  ifelse(
-    #     is.na(AcctGper) &
-    #       (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
-    #     lag(AcctG)/2, AcctGper
-    #   ),
-    #   AcctV =  ifelse(
-    #     is.na(AcctV) &
-    #       (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
-    #     lag(AcctV)/2, AcctV
-    #   ),
-    #   AcctVper =  ifelse(
-    #     is.na(AcctVper) & (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
-    #     lag(AcctV)/2, AcctVper
-    #   ),
-    #   Gain =  ifelse(
-    #     is.na(Gain) & (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
-    #     lag(Gain)/2, Gain
-    #   ),
-    #   Gainper =  ifelse(
-    #     is.na(Gainper) & (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
-    #     lag(Gain)/2, Gainper
-    #   )
-    # ) %>%
-    # ungroup()
-
+  # Rajout de la moitié des accroissements pour les arbres coupés
+  # group_by(NumForet, NumPlac, NumArbre) %>%
+  # mutate(
+  #   AcctD = ifelse(
+  #     !is.na(lag(Coupe)) &
+  #       (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
+  #     AcctD/2, AcctD
+  #     ),
+  #   AcctG =  ifelse(
+  #     is.na(AcctG) &
+  #       (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
+  #     lag(AcctG)/2, AcctG
+  #   ),
+  #   AcctGper =  ifelse(
+  #     is.na(AcctGper) &
+  #       (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
+  #     lag(AcctG)/2, AcctGper
+  #   ),
+  #   AcctV =  ifelse(
+  #     is.na(AcctV) &
+  #       (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
+  #     lag(AcctV)/2, AcctV
+  #   ),
+  #   AcctVper =  ifelse(
+  #     is.na(AcctVper) & (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
+  #     lag(AcctV)/2, AcctVper
+  #   ),
+  #   Gain =  ifelse(
+  #     is.na(Gain) & (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
+  #     lag(Gain)/2, Gain
+  #   ),
+  #   Gainper =  ifelse(
+  #     is.na(Gainper) & (str_detect(lag(Coupe), "E") | str_detect(lag(Coupe), "C")),
+  #     lag(Gain)/2, Gainper
+  #   )
+  # ) %>%
+  # ungroup()
+  
   # -- séparation des populations arbres vivants et arbres morts sur pied/taillis
   tAutres <- filter(Arbres, !is.na(Type))
   Arbres <- filter(Arbres, is.na(Type))
-
+  
   # -- cleaning Arbres table
   # define attributes (caract1/2/3) from 'Listes' table
   attributes_to_add <-
@@ -607,7 +542,7 @@ gf_Calculs <- function(
     select(Attribut) %>%
     unlist() %>%
     unname()
-
+  
   # TODO : faire une liste avec tous les id_vars selon les tables,
   # toutes les variables d'attribut selon les tables
   # variables d'identifiant
@@ -625,7 +560,7 @@ gf_Calculs <- function(
   # variables des attributs carbone (nécessaires au calcul carbone)
   carbon_attributes_vars <- c(
     "TypeTarif", "NumTarif", "TypeEss", "CoefHoupp", "TauxCarbone", "InfraDensite"
-    )
+  )
   # variables de résultat
   results_vars <- c(
     "Nha", "Gha", "Vha", "VhaIFN", "VcHa", "VpHa",
@@ -636,18 +571,18 @@ gf_Calculs <- function(
   #   results_vars <-
   #     setdiff(results_vars, c("Gainper", "AcctVper", "AcctGper"))
   # } -> NON : mettre les colonnes des variables dynamiques, même si vides.
-
+  
   # selection vars
   vars_to_select <- c(
     id_vars, carbon_attributes_vars, attribute_vars, results_vars
   )
   # select
   Arbres <- Arbres %>% select( any_of(vars_to_select) )
-
+  
   if (nrow(tAutres) > 0) {
     posBMP <- which(is.element(tAutres$Type, c("A", "C", "S")))
     posTaillis <- which(is.element(tAutres$Type, "Taillis"))
-
+    
     if (length(posBMP) > 0) {
       BMP <- rbind(
         BMP,
@@ -737,9 +672,9 @@ gf_Calculs <- function(
         stringsAsFactors = F
       )
   }
-
-
-
+  
+  
+  
   # -- calcul du stock de carbone dans les arbres vivants
   # -- paramètres de calcul
   DecroissanceRx <- 1
@@ -747,7 +682,7 @@ gf_Calculs <- function(
   # RendementD <- 0.99
   DureeVieD <- 3
   DureeVieConnexes <- 1
-
+  
   # -- calcul
   # table des rendements
   yield_table <- tibble(
@@ -760,10 +695,10 @@ gf_Calculs <- function(
   #   select(Essence, Classe, Vha, Nha) %>%
   #   mutate(Haut = Vha / Nha *)
   # -> pas possible si pas de DiamMed
-
+  
   # -- chargement table algan
   load(paste0(wd, "/tables/algan_table.Rdata"))
-
+  
   # table principale
   living_trees_carbon_splitted_by_log <-
     Arbres %>%
@@ -777,14 +712,14 @@ gf_Calculs <- function(
       DureeVieD = DureeVieD,
       DureeVieConnexes = DureeVieConnexes
     )
-
+  
   # carbone total par arbre
   living_trees_carbon <-
     living_trees_carbon_splitted_by_log %>%
     group_by(IdArbre) %>%
     summarise(tCha = sum(tCha, na.rm =T)) %>%
     ungroup()
-
+  
   Arbres <-
     Arbres %>%
     # jonction de la table living_trees_carbon
@@ -794,13 +729,13 @@ gf_Calculs <- function(
     ) %>%
     select(-all_of(carbon_attributes_vars))
   #####/\#####
-
+  
   #### 3/ Régénération ####
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   if (nrow(Reges) > 0) {
     # -- calcul densités à l'hectare (poids)
     Reges <-
@@ -808,18 +743,18 @@ gf_Calculs <- function(
       set_up_calcul_tables(
         plot_df = Placettes,
         settings_df = Echantillonnages
-        ) %>%
+      ) %>%
       mutate(
         Recouv = as.numeric(Recouv),
         Class1 = as.numeric(Class1),
         Class2 = as.numeric(Class2),
         Class3 = as.numeric(Class3),
-
+        
         #  initiate EssValor column # TODO : to suppress ?
         EssValor = NA
       ) %>%
       calculs_rege(EssReg)
-
+    
     # -- prise en compte EssInd
     for (i in 1:nrow(Forets)) {
       pos_EssInd <- which(EssInd$NumForet == Forets$NumForet[i])
@@ -889,13 +824,13 @@ gf_Calculs <- function(
         stringsAsFactors = F
       )
   }
-
+  
   #### 4/ Traitement PCQM ####
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   if (nrow(PCQM) > 0) {
     # -- paramètres et correction
     PCQM <-
@@ -904,14 +839,14 @@ gf_Calculs <- function(
         plot_df = Placettes,
         settings_df = Echantillonnages
       )
-
-
+    
+    
     # -- calculs
     # population de Taillis
     if (length(which(PCQM$Population == "Taillis")) > 0) {
       # table PCQM
       Taillis_PCQM <- PCQM %>% filter(Population == "Taillis") %>% miroir_add(PCQM = T)
-
+      
       # table correction des quarts vides
       Corr <-
         data.frame(
@@ -931,7 +866,7 @@ gf_Calculs <- function(
           Vides = 4 - Nbre,
           Surf = Vides * quantile(Taillis_PCQM$Dist, probs = 0.95) ^ 2
         )
-
+      
       # table PCQM suite
       Taillis_PCQM <-
         Taillis_PCQM %>%
@@ -970,12 +905,12 @@ gf_Calculs <- function(
         ) %>%
         find_ESSREG(code_essences = Essences)
     }
-
+    
     # population de BMP
     if (length(which(PCQM$Population == "BMP")) > 0) {
       # table PCQM
       BMP_PCQM <- PCQM %>% filter(Population == "BMP") %>% miroir_add(PCQM = T)
-
+      
       # table correction des quarts vides
       Corr <-
         data.frame(
@@ -995,7 +930,7 @@ gf_Calculs <- function(
           Vides = 4 - Nbre,
           Surf = Vides * quantile(BMP_PCQM$Dist, probs = 0.95) ^ 2
         )
-
+      
       # table PCQM suite
       BMP_PCQM <-
         BMP_PCQM %>% # bug si texte dans le champs
@@ -1030,7 +965,7 @@ gf_Calculs <- function(
         left_join(EssReg, by = c("NumForet", "Essence")) %>%
         mutate(EssReg = as.character(EssReg), Limite = NA) %>%
         find_ESSREG(code_essences = Essences)
-
+      
       BMP_PCQM <-
         BMP_PCQM %>%
         select(
@@ -1043,14 +978,14 @@ gf_Calculs <- function(
         )
     }
   }
-
-
+  
+  
   #### 5/ Traitement Cercles ####
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   # -- set up
   Cercles <-
     Cercles %>%
@@ -1058,24 +993,24 @@ gf_Calculs <- function(
       plot_df = Placettes,
       settings_df = Echantillonnages
     )
-
+  
   if (nrow(Cercles) > 0) {
-  # -- calcul
-  # population de Taillis
-  Taillis_Cercles <- calculs_cercles(Cercles, "Taillis", 10, code_essreg = EssReg, diam_cat = Cats)
-  # population de BMP
-  BMP_Cercles <-
-    calculs_cercles(
-      df = Cercles,
-      population = "BMP",
-      dist_max = 20, # valeur par défaut si non précisée dans la table Echantillonnages
-      code_essreg = EssReg,
-      diam_cat = Cats,
-      add_bmp_vars = T
-    ) %>%
-    mutate(Dist = NA, Limite = NA)
+    # -- calcul
+    # population de Taillis
+    Taillis_Cercles <- calculs_cercles(Cercles, "Taillis", 10, code_essreg = EssReg, diam_cat = Cats)
+    # population de BMP
+    BMP_Cercles <-
+      calculs_cercles(
+        df = Cercles,
+        population = "BMP",
+        dist_max = 20, # valeur par défaut si non précisée dans la table Echantillonnages
+        code_essreg = EssReg,
+        diam_cat = Cats,
+        add_bmp_vars = T
+      ) %>%
+      mutate(Dist = NA, Limite = NA)
   }
-
+  
   ##### 6/ Rassemblement des population Taillis/BMP (inventaires PCQM et/ou Cercles)
   # -- Taillis
   if (!is.element("Taillis_PCQM", ls())) {
@@ -1163,14 +1098,14 @@ gf_Calculs <- function(
         stringsAsFactors = F
       )
   }
-
+  
   # -- Superposition des tables :
   Taillis <- rbind(Taillis, Taillis_PCQM, Taillis_Cercles)
   BMP <- rbind(BMP, BMP_PCQM, BMP_Cercles)
   # -- Calcul du volume des BMP :
   # load carbon shares deadwood
   load(paste0(wd, "/tables/carbon_codes_tables.Rdata"))
-
+  
   BMP <-
     BMP %>%
     set_up_calcul_tables(
@@ -1186,14 +1121,14 @@ gf_Calculs <- function(
       dead_wood_density = DensiteBoisMort,
       decomposition_stage_code = CodeStadeDecomposition
     )
-
-
+  
+  
   ##### 6/ Bois mort au sol ####
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   #N.B : pour miroir BMSLineaires, consigne = déplacer Azimut des transects pour les faire malgré tout
   # ----- 6.1/ Linéaires : BMSLineaire
   BMSLineaires <-
@@ -1212,7 +1147,7 @@ gf_Calculs <- function(
       dead_wood_density = DensiteBoisMort,
       decomposition_stage_code = CodeStadeDecomposition
     )
-
+  
   # ----- 6.2/ Circulaire : BMSCercle
   BMSsup30 <- # TODO : changer nom ?
     BMSCercles %>%
@@ -1229,13 +1164,13 @@ gf_Calculs <- function(
       dead_wood_density = DensiteBoisMort,
       decomposition_stage_code = CodeStadeDecomposition
     )
-
+  
   #### 7/ Dendromicohabitats ####
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   Codes <-
     Arbres %>%
     filter(
@@ -1249,13 +1184,13 @@ gf_Calculs <- function(
     ) %>%
     calculs_dmh(dmh_df = CodeEcolos)
   ##### / \ #####
-
+  
   #### 9/ Sauvegarde ####
-
+  
   # -- switch shiny ***
   incProgress(amount = 1 / complete_progress) # detail = i18n()$t(detail)
   # *** --
-
+  
   # -- setting df classes
   # (évite pblme fonction Agreg01 dans agrégation par placettes)
   Arbres <- data.frame(Arbres)
@@ -1267,7 +1202,7 @@ gf_Calculs <- function(
   BMSsup30 <- data.frame(BMSsup30)
   BMP <- data.frame(BMP)
   Codes <- data.frame(Codes)
-
+  
   # # -- save directory
   # output_dir <- "tables"
   # dir.create(output_dir, showWarnings = F, recursive = T)
@@ -1285,11 +1220,73 @@ gf_Calculs <- function(
   #     showWarnings = F, recursive = T
   #   )
   #
-    save(
-      TauxR, Arbres, Perches, Reges, Taillis, Reperes, BMSLineaires,
-      BMSsup30, BMP, Codes, AcctD, living_trees_carbon_splitted_by_log,
-      file = file.path(output_dir, "tables/gfTablesBrutes.Rdata")
-    )
+  save(
+    TauxR, Arbres, Perches, Reges, Taillis, Reperes, BMSLineaires,
+    BMSsup30, BMP, Codes, AcctD, living_trees_carbon_splitted_by_log,
+    file = file.path(output_dir, "tables/gfTablesBrutes.Rdata")
+  )
   # }
 }
+
+
+
+
+# #### fonction de calcul du carbone dans le bois mort sur pied ####
+# calculs_BMP_carbone <- function(
+#   df = NULL,
+#   species_table = NULL,
+#   dead_wood_carbon_content = NULL,
+#   dead_wood_density = NULL,
+#   decomposition_stage_code = NULL
+# ) {
+#   # certaines essences non comptées car pas de données
+#   standing_dead_wood_carbon_content <-
+#     dead_wood_carbon_content %>%
+#     filter(Type == "Bois mort sur pied") %>%
+#     dplyr::select(-Type)
+#   standing_dead_wood_density <-
+#     dead_wood_density %>%
+#     filter(Type == "Bois mort sur pied") %>%
+#     dplyr::select(-Type)
+#
+#   df <-
+#     df %>%
+#     mutate(
+#       Stade_AFI = paste(StadeE, StadeD, sep = "."),
+#       time_span = paste(".", StadeD, sep = "")
+#     ) %>%
+#     left_join(
+#       decomposition_stage_code,
+#       by = c("time_span" = "Stade_AFI")
+#     ) %>%
+#     mutate(
+#       Code = ifelse(Stade_AFI == "1.1", 1, Code),
+#       Code = ifelse(Stade_AFI == "2.1", 1, Code),
+#       Code = ifelse(Stade_AFI == "4.4", 5, Code),
+#       Code = ifelse(Stade_AFI == "4.5", 5, Code)
+#     ) %>%
+#     # taux carbone Fs/Rx
+#     left_join(
+#       species_table[,c("Essence","TypeEss")],
+#       by = "Essence") %>%
+#     # taux de carbone dans feuillus/resineux en fonction stade
+#     left_join(
+#       standing_dead_wood_carbon_content,
+#       by = c("TypeEss", "Code")
+#     ) %>%
+#     left_join(
+#       standing_dead_wood_density,
+#       by = c("Essence", "Code")
+#     ) %>%
+#     mutate(
+#       Carbone = Vha * Infradensite * (Taux_carbone) / 100
+#     ) %>%
+#     select(
+#       -Stade_AFI, -time_span, -Code, -TypeEss,
+#       -Taux_carbone, -SRF, -Infradensite
+#     )
+#
+#   # -- return of calculs_BMP_carbone function
+#   return(df)
+# }
 

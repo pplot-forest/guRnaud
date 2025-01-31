@@ -1,8 +1,23 @@
 ##### fonction pour choisir le dispositif à traiter #####
+#' Choix de la forêt à traiter
+#' @description La fonction permet de choisir un/des massif(s) forestier(s) à traiter parmi ceux en mémoire.
+#' @return La fonction retourne une liste de forêt message en cas d'erreur/éléments manquants.
+#' @param object_list = liste d'objets à filtrer
+#' @param admin = table "Forêts"
+#' @param check_all_msg = message pour sélectionner toutes les forêts
+#' @param df_2_test = à préciser
+#' @import dplyr
+#' @import openxlsx
+#' @import rlang
+#' @import tidyr
+#' @export
 choose_forest <- function(
     object_list, admin = Forets, check_all_msg = NULL,
     df_2_test = NULL
 ) {
+  # initialize variables
+  Forets <- NumForet <- NULL
+  
   # -- initialisation
   tmp <- c()
   all_num_list <- c()

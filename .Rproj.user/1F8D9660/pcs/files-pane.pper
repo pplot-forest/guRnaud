@@ -2,8 +2,8 @@
     "sortOrder": [
         {
             "columnIndex": 2,
-            "ascending": false
+            "ascending": true
         }
     ],
-    "path": "~/Travail/Outils/GitHub/guRnaud/R"
+    "path": "~/Travail/Outils/GitHub/guRnaud"
 }

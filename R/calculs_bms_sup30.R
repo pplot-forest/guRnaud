@@ -1,8 +1,21 @@
-##### fonction de calcul des volumes de bois mort au sol > 30 cm #####
-# ----- calcul des Vha
+#' Fonction de calcul des volumes de bois mort au sol > 30 cm 
+#' @description La fonction permet de calculer les variables de résultats des bois mort au sol > 30 cm .
+#' @return La fonction retourne la table d'entrée avec les variables de résultats.
+#' @param df = table d'inventaire en entrée
+#' @param code_essreg = table listant les regroupements d'essence
+#' @import dplyr
+#' @import rlang
+#' @importFrom stats quantile
+#' @import stringr
+#' @import tidyr
+#' @export
 calculs_bms_sup30 <- function(
     df = NULL, code_essreg = NULL
 ) { # TODO : si un jour besoin changement protocole, cf PermPSDRF2
+  # initialize variables
+  Cat <- Classe <- Cycle <- DiamFin <- DiamIni <- DiamMed <- EssReg <- Essence <- Longueur <- NULL
+  NumForet <- NumPlac <- Rayon <- Stade <- StadeD <- StadeE <- Vha <- NULL
+  
   df <-
     if (nrow(df) > 0) {
       df %>%

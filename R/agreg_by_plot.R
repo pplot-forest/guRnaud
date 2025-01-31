@@ -1,16 +1,19 @@
-# ----- Chargement des packages nécessaires -----
-
-suppressMessages({
-  library("dplyr")
-  library("stringr")
-})
-
-
-
-
-##### fonction gf_AgregArbres #####
-# = Agrégation, à l'échelle de chaque placette, des différentes variables
-# d'analyse (dendrométriques, économique et écologiques)
+#' Fonction correspondant à l'étape d'agrégation des résultats par placettes
+#' @description La fonction utilise les résultats de calcul par arbre. Elle permet d'agréger les résultats d'inventaire par placette.
+#' @return La fonction crée une liste de tables de résultats par placette ("results_by_plot") enregistrée dans l'archive "gfTablesElaboreesPlac.Rdata"
+#' @param wd = répertoire de travail
+#' @param output_dir = répertoire de sortie
+#' @param forest = numéro et nom de la forêt
+#' @param last_cycle = numéro du dernier passage en inventaire
+#' @param combination_table = table listant les combinaisons d'attributs à utiliser pour agréger les résultats
+#' @param complete_progress = barre de progression (application shiny)
+#' @param i18n = fonction de traduction  (application shiny)
+#' @import dplyr
+#' @import shiny
+#' @import rlang
+#' @import tidyr
+#' @importFrom stats na.omit
+#' @export
 agreg_by_plot <- function(
   wd = NULL,
   output_dir = NULL,
@@ -20,6 +23,14 @@ agreg_by_plot <- function(
   complete_progress = complete_progress,
   i18n = i18n
 ) {
+  # initialize variables
+  Listes <- Liste <- Attribut <- Descriptif_Attribut <- Arbres <- NumForet <- Codes <- NULL
+  living_trees_carbon_splitted_by_logNULL <- Liste <- Attribut <- Descriptif_Attribut <- NULL
+  Arbres <- NumForet <- Codes <- living_trees_carbon_splitted_by_log <- duree_vie <- NULL
+  Lifetime<- Coupe <- Gha <- Vha <- VcHa <- Taillis <- Perches <- BMSLineaires <- NULL
+  BMSsup30 <- BMP <- Diam <- Nha <- Type <- NumPlac <- Cycle <- Essence <- EssReg <- NULL
+  StadeD <- StadeE <- Classe <- Cat <- tCha <- tCha_total <- Vha_total <- Reges <- Data <- NULL
+  
   # -- switch shiny ***
   # incrémentation de la barre de progression
   # incProgress(detail = i18n()$t("Agrégation des résultats par placette..."))

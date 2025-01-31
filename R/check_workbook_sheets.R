@@ -1,7 +1,19 @@
-##### fonction pour contrôler les feuilles du classeur d'inventaire #####
+#' Vérification des noms de feuille du classeur d'inventaire
+#' @description La fonction contrôle les intitulés des feuilles du classeur d'inventaire contenant les données.
+#' @return La fonction retourne un message en cas d'erreur/éléments manquants.
+#' @param file = chemin du fichier d'inventaire
+#' @param sheets_names = liste des noms de feuille à vérifier
+#' @import dplyr
+#' @import openxlsx
+#' @import rlang
+#' @import tidyr
+#' @export
 check_workbook_sheets <- function(
     file = NULL, sheets_names = NULL
 ) {
+  # initialize variables
+  
+  
   # -- paramètres
   # feuilles du classeur d'inventaire
   workbook_sheets <- getSheetNames(file)

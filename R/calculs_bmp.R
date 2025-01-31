@@ -1,5 +1,18 @@
-##### fonction de calcul des volumes de bois mort sur pied #####
+#' Fonction de calcul des volumes de bois mort sur pied
+#' @description La fonction permet de calculer les variables de résultats du bois mort sur pied.
+#' @return La fonction retourne la table d'entrée avec les variables de résultats.
+#' @param df = table d'inventaire en entrée
+#' @import dplyr
+#' @import rlang
+#' @importFrom stats quantile
+#' @import stringr
+#' @import tidyr
+#' @export
 calculs_bmp <- function(df = NULL) {
+  # initialize variables
+  Cat <- Classe <- Cycle <- Diam <- Dist <- EssReg <- Essence <- Gha <- Haut <- Limite <- Nha <- NULL
+  NumForet <- NumPlac <- NumTarifBMP <- Stade <- StadeD <- StadeE <- Type <- TypeTarifBMP <- Vha <- NULL
+  
   df <-
     if (nrow(df) > 0) {
       df %>%

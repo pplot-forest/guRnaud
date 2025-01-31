@@ -1,7 +1,21 @@
-##### fonction de traitement de la régénération #####
+#' Fonction de traitement de la régénération
+#' @description La fonction permet de traiter les données d'inventaire de régénération.
+#' @return La fonction retourne la table d'entrée avec les variables de résultats.
+#' @param df = table d'inventaire en entrée
+#' @param code_essreg = table contenant la liste des regroupement d'essences
+#' @import dplyr
+#' @import rlang
+#' @importFrom stats quantile
+#' @import stringr
+#' @import tidyr
+#' @export
 calculs_rege <- function(
     df = NULL, code_essreg = NULL
 ) {
+  # initialize variables
+  Class1 <- Class2 <- Class3 <- Cycle <- Essence <- NbSousPlac <- NumForet <- NumPlac <- NULL
+  RayonSousPlac <- Recouv <- SsPlac <- plac_nb <- NULL
+  
   df <-
     df %>%
     left_join(code_essreg, by = c("NumForet", "Essence")) %>%

@@ -1,4 +1,19 @@
-#### fonction calculs du carbone dans le bois mort au sol ####
+#' Fonction de calcul du carbone dans le bois mort au sol 
+#' @description La fonction permet de calculer les variables de résultats relatives au stock de carbone dans le bois mort.
+#' @return La fonction retourne la table d'entrée avec les variables de résultats relatives au stock de carbone.
+#' @param df = table d'inventaire en entrée
+#' @param living_trees_table = table contenant les données de bois vivant (utilisée pour déterminer la liste des essences majortaires),
+#' @param species_table = table des essences
+#' @param type = type de bois mort ("Bois mort au sol" ou "Bois mort sur pied")
+#' @param dead_wood_carbon_content = table de données carbone
+#' @param dead_wood_density = table de données sur la densité de bois par essence
+#' @param decomposition_stage_code = table listant les stades de décomposition rencontrés dans l'inventaire
+#' @import dplyr
+#' @import stringr
+#' @import rlang
+#' @import tidyr
+#' @importFrom stats quantile
+#' @export
 calculs_BM_carbone = function(
     df = NULL,
     living_trees_table = NULL,
@@ -8,6 +23,10 @@ calculs_BM_carbone = function(
     dead_wood_density = NULL,
     decomposition_stage_code = NULL
 ){
+  # initialize variables
+  Code <- Cycle <- Essence <- Infradensite <- NumForet <- NumPlac <- SRF <- StadeD <- StadeE <- Stade_AFI <- NULL
+  Taux_carbone <- Type <- TypeEss <- Vha <- main_species <- species_to_join <- time_span <- NULL
+  
   # certaines essences bois mort non comptées car pas de données (ex Pin L)
   # associer les Ind. à l'essence majoritaire de la placette
 

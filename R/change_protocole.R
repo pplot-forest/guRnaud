@@ -1,5 +1,22 @@
-##### fonction change_protocole : extrait de la table Echantillonnages les cycles concernés par le changement de protocole (s'il existe) #####
+#' Traite les changements de protocole
+#' @description La fonction permet de traiter les changements de méthodes d'échantillonnage entre 2 passages en 
+#' inventaire. Elle récupère entre 2 méthodes les paramètres d'échantillonnage correspondant aux plus petits dénominateurs communs. De cette façon, il est possible de calculer des résultats d'accroissement malgré le changement de protocole.
+#' @return La fonction retourne une table contenant les paramètres d'échantillonnage utilisés dans les différents calculs de résultats.
+#' @param echant_DF = table d'échantillonnage
+#' @import dplyr
+#' @import openxlsx
+#' @import rlang
+#' @importFrom stats quantile
+#' @import stringr
+#' @import tcltk
+#' @import tidyr
+#' @import tools
+#' @export
 change_protocole <- function (echant_DF) {
+  # initialize variables
+Azimut <- Coeff <- Cycle <- DiamLim <- DiamLim1 <- DiamLim2 <- DiamLim3 <- Dist <- NumForet <- NULL
+NumPlac <- Rayon1 <- Rayon2 <- Rayon3 <- Strate <- NULL
+  
   # echant_DF <- Echantillonnages # debug
   # on détecte si le protocole change à travers les cycles d'inventaire
   # echant_NAMES <- syms(setdiff(names(echant_DF), "Cycle"))

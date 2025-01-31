@@ -1,4 +1,9 @@
-##### fonction de nettoyage des noms #####
+#' Fonction de nettoyage des noms
+#' @description La fonction permet de débarrasser une chaîne de caractères (comme un nom de massif forestier, de GF, etc.) des caractères pouvant gêner le traitement des données (espaces, caractères spéciaux, ...).
+#' @return La fonction renvoie une chaîne de caractères
+#' @param string = chaîne de caractères en entrée
+#' @import stringr
+#' @export
 clean_names <- function(string) {
   string <- gsub("/", " sur ", string)
   string <- gsub("\\.", "_", string, fixed)
@@ -27,7 +32,12 @@ clean_names <- function(string) {
   return(string)
 }
 
-##### fonction de nettoyage compilation pdf #####
+
+#' Fonction de nettoyage après compilation
+#' @description La fonction supprime les fichiers "superflus" dans le dossier "out" après l'édition d'un livret de résutlats
+#' @param output = nom du fichier .tex
+#' @import stringr
+#' @export
 clean_after_knit <- function(output) {
   file.remove(output)
   if (exists(gsub(".tex", ".aux", output))) file.remove(gsub(".tex", ".aux", output))
@@ -35,7 +45,12 @@ clean_after_knit <- function(output) {
   if (exists(gsub(".tex", ".out", output))) file.remove(gsub(".tex", ".out", output))
 }
 
-##### fonction pour créer des objets nuls (package) #####
+
+#' Création d'objets nuls (package) 
+#' @description La fonction crée une liste d'objets nuls
+#' @param objects_list = liste d'objets
+#' @import stringr
+#' @export
 create_null <- function(objects_list) {
   for (obj in objects_list) assign(obj, NULL, envir = parent.frame())
 }

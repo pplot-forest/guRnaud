@@ -1,7 +1,19 @@
-##### fonction de calcul des variables éconoomiques #####
+#' Fonction de calcul des variables éconoomiques des arbres
+#' @description La fonction calcule les variables économiques de chaque arbre en fonction de la mercuriale de prix choisie
+#' @return La fonction renvoie la table d'entrée avec les variables économiques des arbres (Vha)
+#' @param df = table d'inventaire en entrée
+#' @param code_prix = table listant les prix par essence, classe de diamètre et qualité
+#' @import dplyr
+#' @import stringr
+#' @import rlang
+#' @import tidyr
+#' @export
 calculs_Eco <- function(
     df = NULL, code_prix = NULL
 ) {
+  # initialize variables
+  Classe <- Diam <- PU <- Vha <- VhaSup <- NULL
+  
   df <-
     df %>%
     # ---------- Valeur de consommation

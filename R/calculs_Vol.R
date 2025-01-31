@@ -1,6 +1,19 @@
-##### fonction de calcul des volumes #####
-# STEP4
+#' Fonction de calcul du volume des arbres
+#' @description La fonction calcule le volume de chaque arbre en fonction des tarifs de cubage choisis
+#' @return La fonction renvoie la table d'entrée avec la variable du volume des arbres (Vha)
+#' @param df = table d'inventaire en entrée
+#' @param IFN = variable permettant de rajouter un volume "IFN"
+#' @param Sup = variable permettant de calculer le volume pour la classe de diamètre au-dessus de celle de l'arbre 
+#' (utile dans les calculs de variables économiques)
+#' @import dplyr
+#' @import stringr
+#' @import rlang
+#' @import tidyr
+#' @export
 calculs_Vol <- function(df = NULL, IFN = F, Sup = F) {
+  # initialize variables
+  Gha <- Haut <- Nha <- Type <- calculs_Eco <- NULL
+  
   add_var <- ""
   add_Tarif <- ""
   add_Diam <- ""
